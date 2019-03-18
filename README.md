@@ -1,11 +1,9 @@
 Vector Graphics for Godot.
 
-Please note:
-
-* This is experimental
+* This is an experiment
 * It's written in C++ 11, so it's editor-only
-* All vector graphics can be converted into meshes
-* I'm not currently working on this
+* All vector graphics can be converted into `MeshInstance2D`s
+* I have very little time to work on this
 
 # Install and build
 
@@ -16,7 +14,7 @@ Please note:
 
 # Basic usage in Godot
 
-Drag and drop SVGs into the 2d canvas.
+Drag and drop an SVG into the 2d canvas.
 
 Or: add a new VGPath node in your scene (under a Node2D).
 

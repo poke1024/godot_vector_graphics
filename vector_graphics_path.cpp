@@ -6,12 +6,36 @@
 #include "core/os/file_access.h"
 #include "editor/editor_node.h"
 #include "vector_graphics_color.h"
+#include "vector_graphics_gradient.h"
 #include "vector_graphics_adaptive_renderer.h"
 
 static tove::PaintRef to_tove_paint(Ref<VGPaint> p_paint) {
 	Ref<VGColor> color = p_paint;
 	if (color.is_null()) {
-		return tove::PaintRef();
+		Ref<VGGradient> gradient = p_paint;
+		if (gradient.is_null()) {
+			return tove::PaintRef();
+		} else {
+			Vector2 p1 = gradient->get_p1();
+			Vector2 p2 = gradient->get_p2();
+			auto tove_grad = tove::tove_make_shared<tove::LinearGradient>(
+				p1.x, p1.y, p2.x, p2.y);
+
+			Ref<Gradient> color_ramp = gradient->get_color_ramp();
+			if (!color_ramp.is_null()) {
+				Vector<Gradient::Point> &p = color_ramp->get_points();
+				for (int i = 0; i < p.size(); i++) {
+					tove_grad->addColorStop(
+						p[i].offset,
+						p[i].color.r,
+						p[i].color.g,
+						p[i].color.b,
+						p[i].color.a);
+				}
+			}
+
+			return tove_grad;
+		}
 	} else {
 		const Color c = color->get_color();
 		return tove::tove_make_shared<tove::Color>(c.r, c.g, c.b, c.a);
@@ -562,9 +586,13 @@ MeshInstance2D *VGPath::create_mesh_node() {
 	if (renderer.is_valid()) {
 		Ref<ArrayMesh> mesh;
 		mesh.instance();
+
 		renderer->render_mesh(mesh, this);
 		mesh_inst->set_mesh(mesh);
 		mesh_inst->set_texture(renderer->render_texture(this));		
+
+		mesh_inst->set_transform(get_transform());
+		mesh_inst->set_name("Meshed " + get_name());
 	}
 
 	return mesh_inst;
@@ -586,14 +614,20 @@ VGPath::VGPath() {
 	tove_path = tove::tove_make_shared<tove::Path>();
 	set_notify_transform(true);
 
-	/*tove::SubpathRef tove_subpath = tove::tove_make_shared<tove::Subpath>();
+	// when created as a unique item from the UI, populate with default content.
+
+	Ref<VGAdaptiveRenderer> renderer;
+	renderer.instance();
+	set_renderer(renderer);
+
+	tove::SubpathRef tove_subpath = tove::tove_make_shared<tove::Subpath>();
 	tove_subpath->drawEllipse(0, 0, 100, 100);
 	tove_path->addSubpath(tove_subpath);
 
 	tove_path->setFillColor(tove::tove_make_shared<tove::Color>(0.8, 0.1, 0.1));
 	tove_path->setLineColor(tove::tove_make_shared<tove::Color>(0, 0, 0));
 	create_fill_color();
-	create_line_color();*/
+	create_line_color();
 
 	set_dirty();
 }

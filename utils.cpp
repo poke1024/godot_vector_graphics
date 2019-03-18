@@ -1,8 +1,8 @@
 /*************************************************************************/
-/*  tove2d.cpp   	                                                     */
+/*  utils.cpp   	                                                     */
 /*************************************************************************/
 
-#include "tove2d.h"
+#include "utils.h"
 #include "tove2d/src/cpp/mesh/meshifier.h"
 
 tove::PathRef new_transformed_path(const tove::PathRef &p_tove_path, const Transform2D &p_transform) {

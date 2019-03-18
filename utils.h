@@ -1,9 +1,9 @@
 /*************************************************************************/
-/*  tove2d.h     	                                                     */
+/*  utils.h     	                                                     */
 /*************************************************************************/
 
-#ifndef TOVEGD_TOVE2D_H
-#define TOVEGD_TOVE2D_H
+#ifndef VG_UTILS_H
+#define VG_UTILS_H
 
 #include <stdint.h>
 #include "core/class_db.h"
@@ -22,4 +22,4 @@ tove::PathRef new_transformed_path(const tove::PathRef &p_tove_path, const Trans
 
 void copy_mesh(Ref<ArrayMesh> &p_mesh, tove::MeshRef &p_tove_mesh);
 
-#endif // TOVEGD_TOVE2D_H
+#endif // VG_UTILS_H

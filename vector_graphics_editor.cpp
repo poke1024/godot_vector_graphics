@@ -1011,17 +1011,21 @@ void VGEditor::_create_mesh_node() {
 
 	Node *parent = node_vg->get_parent();
 
+	// for some reason, combining the following two actions into one won't work.
+
 	undo_redo->create_action(TTR("Create Mesh Node"));
 	undo_redo->add_do_method(parent, "add_child_below_node", node_vg, baked);
 	undo_redo->add_do_method(baked, "set_owner", node_vg->get_owner());
-	undo_redo->add_undo_method(parent, "remove_child", baked);
 	undo_redo->add_do_reference(baked);
+	undo_redo->add_undo_method(parent, "remove_child", baked);
 	undo_redo->commit_action();
 
-	//add_child_below_node(baked, node_vg, true);
-	/*reown_children(node_vg);
-	EditorNode::get_singleton()->get_scene_tree_dock()->replace_node(node_vg, baked);
-	edit(NULL);*/
+	undo_redo->create_action(TTR("Remove VG Node"));
+	undo_redo->add_do_method(parent, "remove_child", node_vg);	
+	undo_redo->add_undo_method(parent, "add_child_below_node", baked, node_vg);
+	undo_redo->add_undo_method(node_vg, "set_owner", baked->get_owner());
+	undo_redo->add_undo_reference(node_vg);
+	undo_redo->commit_action();
 }
 
 void VGEditor::_notification(int p_what) {

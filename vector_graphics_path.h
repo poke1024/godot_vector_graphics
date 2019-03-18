@@ -5,7 +5,7 @@
 #ifndef VG_PATH_H
 #define VG_PATH_H
 
-#include "tove2d.h"
+#include "utils.h"
 #include "scene/2d/mesh_instance_2d.h"
 #include "vector_graphics_paint.h"
 #include "vector_graphics_renderer.h"

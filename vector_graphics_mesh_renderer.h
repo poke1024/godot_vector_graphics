@@ -6,7 +6,7 @@
 #define VG_MESH_RENDERER_H
 
 #include "vector_graphics_renderer.h"
-#include "tove2d.h"
+#include "utils.h"
 
 class VGMeshRenderer : public VGRenderer {
 protected:

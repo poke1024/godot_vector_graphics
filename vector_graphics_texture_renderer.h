@@ -6,7 +6,7 @@
 #define VG_TEXTURE_RENDERER_H
 
 #include "vector_graphics_renderer.h"
-#include "tove2d.h"
+#include "utils.h"
 
 class VGTextureRenderer : public VGRenderer {
 	GDCLASS(VGTextureRenderer, VGRenderer);
