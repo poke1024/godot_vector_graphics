@@ -46,6 +46,7 @@ protected:
 	void _get_property_list(List<PropertyInfo> *p_list) const;
 
 	void _renderer_changed();
+	void _bubble_change();
 
 	void _notification(int p_what);
 	static void _bind_methods();

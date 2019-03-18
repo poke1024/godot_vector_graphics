@@ -131,6 +131,10 @@ VGTool::VGTool() : canvas_item_editor(CanvasItemEditor::get_singleton()) {
 class VGTransformTool : public VGTool {
 	VGEditor *vg_editor;
 	VGPath *path;
+	UndoRedo *undo_redo;
+
+	Transform2D transform0;
+	Transform2D transform1;
 
 	struct Pos {
 		Vector2 local;
@@ -189,10 +193,10 @@ class VGTransformTool : public VGTool {
 	struct {
 		Vector2 drag_from;
 		Vector2 drag_rotation_center;
+		float initial_angle;
 	} rotate_widget;
 
 	void get_corners(Pos4 &r_pos, const Transform2D &p_xform) {
-		//Rect2 r = tove_bounds_to_rect2(path->get_tove_path()->getBounds());
 		Rect2 r = tove_bounds_to_rect2(path->get_subtree_graphics()->getBounds());
 		Vector2 p[4];
 		for (int i = 0; i < 4; i++) {
@@ -219,13 +223,21 @@ class VGTransformTool : public VGTool {
 		Transform2D t = mapping_to_transform(u1, v1, u2, v2, u3, v3);
 		const float eps = 1e-3;
 		if (t.elements[0].length() > eps && t.elements[1].length() > eps) {
+			transform1 = t;
 			path->set_transform(t);
 		}
+	}
+
+	void _commit_action() {
+		undo_redo->add_do_method(canvas_item_editor->get_viewport_control(), "update");
+		undo_redo->add_undo_method(canvas_item_editor->get_viewport_control(), "update");
+		undo_redo->commit_action();
 	}
 
 public:
 	VGTransformTool(VGEditor *p_vg_editor, VGPath *p_path) :vg_editor(p_vg_editor), path(p_path) {
 		clicked = WIDGET_NONE;
+		undo_redo = vg_editor->get_editor_node()->get_undo_redo();
 	}
 
 	virtual bool forward_gui_input(const Ref<InputEvent> &p_event) {
@@ -236,6 +248,9 @@ public:
 				Transform2D xform = canvas_item_editor->get_canvas_transform() * (pi ? pi->get_global_transform() : Transform2D());
 
 				const real_t grab_threshold = EDITOR_DEF("editors/poly_editor/point_grab_radius", 8);
+
+				transform0 = path->get_transform();
+				transform1 = transform0;
 
 				clicked = WIDGET_NONE;
 				Point2 q = mb->get_position();
@@ -282,14 +297,30 @@ public:
 						drag_rotation_center = path->get_global_transform_with_canvas().get_origin();
 					}
 					rotate_widget.drag_rotation_center = drag_rotation_center;
+					rotate_widget.initial_angle = path->_edit_get_rotation();
 
 					clicked = WIDGET_ROTATE;
 					return true;
 				}
 			} else if (mb->get_button_index() == BUTTON_LEFT && clicked != WIDGET_NONE) {
-				clicked = WIDGET_NONE;
-				path->recenter();
-				path->set_dirty(true);
+				if (clicked != WIDGET_NONE) {
+					if (clicked != WIDGET_ROTATE) {						
+						undo_redo->create_action(TTR("Transform Path"));
+						undo_redo->add_do_method(path, "set_transform", transform1);
+						undo_redo->add_do_method(path, "recenter");
+						undo_redo->add_undo_method(path, "set_transform", transform0);
+						undo_redo->add_undo_method(path, "recenter");
+						_commit_action();
+					} else {
+						undo_redo->create_action(TTR("Rotate Path"));
+						undo_redo->add_do_method(path, "_edit_set_rotation", path->_edit_get_rotation());
+						undo_redo->add_undo_method(path, "_edit_set_rotation", rotate_widget.initial_angle);
+						_commit_action();
+					}
+
+					clicked = WIDGET_NONE;				
+				}
+
 				return true;
 			}
 		}

@@ -214,6 +214,16 @@ void VGPath::_renderer_changed() {
 	set_inherited_dirty(this);	
 }
 
+void VGPath::_bubble_change() {
+	Node *node = get_parent();
+	while (node) {
+		if (node->is_class_ptr(get_class_ptr_static())) {
+			Object::cast_to<VGPath>(node)->subtree_graphics = tove::GraphicsRef();
+		}
+		node = node->get_parent();
+	}
+}
+
 void VGPath::_notification(int p_what) {
 
 	switch (p_what) {
@@ -224,20 +234,19 @@ void VGPath::_notification(int p_what) {
 			}
 		} break;
 		case NOTIFICATION_PARENTED: {
+			_bubble_change();
 			if (inherits_renderer()) {
 				set_dirty();
 				set_inherited_dirty(this);
 			}
 		} break;
+		case NOTIFICATION_UNPARENTED: {
+			set_dirty();
+			_bubble_change();
+		} break;
 		case NOTIFICATION_TRANSFORM_CHANGED: {
 			if (is_inside_tree()) {
-				Node *node = get_parent();
-				while (node) {
-					if (node->is_class_ptr(get_class_ptr_static())) {
-						Object::cast_to<VGPath>(node)->subtree_graphics = tove::GraphicsRef();
-					}
-					node = node->get_parent();
-				}
+				_bubble_change();
 			}
 		} break;
 	}
@@ -267,6 +276,7 @@ void VGPath::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_points", "subpath", "points"), &VGPath::set_points);
 
 	ClassDB::bind_method(D_METHOD("_renderer_changed"), &VGPath::_renderer_changed);
+	ClassDB::bind_method(D_METHOD("recenter"), &VGPath::recenter);
 }
 
 bool VGPath::_set(const StringName &p_name, const Variant &p_value) {
