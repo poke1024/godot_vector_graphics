@@ -1,0 +1,3 @@
+[submodule "tove2d"]
+	path = tove2d
+	url = https://github.com/poke1024/tove2d
