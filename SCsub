@@ -42,27 +42,33 @@ env_tove.PackageSL(
 
 # patching.
 
-declare_vector_sprite = 'Node *createVectorSprite(Ref<Resource> p_resource, Node *p_owner);'
-replace_create = ('child = memnew(Sprite);', 'child = createVectorSprite(texture, target_node);')
+env_vars = Variables(None, ARGUMENTS)
+env_vars.Add(EnumVariable(
+	'svg',
+	'patch for vector graphics svg support?',
+	'nopatch',  allowed_values=('patch', 'nopatch')))
+env_vars.Update(env)
 
-editor_plugins_path = Dir('../../editor/plugins').abspath
-with open(os.path.join(editor_plugins_path, 'canvas_item_editor_plugin.cpp'), 'r+') as f:
-	source_code = f.read()
-	if declare_vector_sprite not in source_code:
-		print("Do you allow vector_graphics to patch Godot to allow better SVG import (Y/n)?")
-		answer = raw_input().upper().strip()
-		if answer == 'Y' or answer == '':
+if env['svg'] == 'patch':
+	declare_vector_sprite = 'Node *createVectorSprite(Ref<Resource> p_resource, Node *p_owner);'
+	replace_create = ('child = memnew(Sprite);', 'child = createVectorSprite(texture, target_node);')
 
-			lines = source_code.split("\n")
-			include_index = None
-			for i, line in enumerate(lines):
-				if line.strip().startswith('#include'):
-					include_index = i
-			lines.insert(include_index + 1, declare_vector_sprite)
-			source_code = "\n".join(lines)
+	editor_plugins_path = Dir('../../editor/plugins').abspath
+	file_path = os.path.join(editor_plugins_path, 'canvas_item_editor_plugin.cpp')
+	with open(file_path, 'r+') as f:
+		source_code = f.read()
+		if declare_vector_sprite not in source_code:
+				lines = source_code.split("\n")
+				include_index = None
+				for i, line in enumerate(lines):
+					if line.strip().startswith('#include'):
+						include_index = i
+				lines.insert(include_index + 1, declare_vector_sprite)
+				source_code = "\n".join(lines)
 
-			source_code = source_code.replace(*replace_create)
+				source_code = source_code.replace(*replace_create)
 
-			f.seek(0)
-			f.write(source_code)
-			print("Patched. You might need to recompile once more.")
+				f.seek(0)
+				f.write(source_code)
+
+				print("patched %s" % file_path)

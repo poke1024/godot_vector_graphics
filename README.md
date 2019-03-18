@@ -11,8 +11,8 @@ Please note:
 
 * Check out this repo as `git clone --recurse-submodules https://github.com/poke1024/godot_vector_graphics`
 * Rename the whole repo folder to `vector_graphics` and move it into your Godot `/modules` folder (i.e. as `/modules/vector_graphics`).
-* Build godot using scons.
-* You will be asked if you allow the `vector_graphics` to patch Godot. Answer `y` in order to automatically patch one editor file, so that you can drag and drop SVGs as vector graphics into Godot (see the SVG Import Patch section below to see what is patched).
+* Build godot using `scons platform=your_platform svg=patch`.
+* The `svg=patch` part in the `scons` build instructs the `vector_graphics` module to apply a patch, so that you can drag and drop SVGs as vector graphics into Godot (see the SVG Import Patch section below to see what exactly is patched).
 
 # Basic usage in Godot
 
