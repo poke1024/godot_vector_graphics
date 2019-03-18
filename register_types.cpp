@@ -42,7 +42,7 @@ void register_vector_graphics_types() {
 	ClassDB::register_class<VGLinearGradient>();
 	ClassDB::register_class<VGRadialGradient>();
 
-	ClassDB::register_class<VGRenderer>();
+	//ClassDB::register_class<VGRenderer>();
 	ClassDB::register_class<VGTextureRenderer>();
 	ClassDB::register_class<VGAdaptiveRenderer>();
 
