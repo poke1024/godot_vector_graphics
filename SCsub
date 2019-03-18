@@ -21,3 +21,48 @@ env_tove.Append(CXXFLAGS=[
     '-std=c++11',
     '-DTOVE_GODOT',
     '-I' + os.path.join(dir_path, 'tove2d/src/thirdparty/fp16/include')])
+
+def package_sl(target, source, env):
+	with open(source[0].abspath, "r") as sl:
+		with open(target[0].abspath, "w") as out:
+			out.write('w << R"GLSL(\n')
+			out.write(sl.read())
+			out.write(')GLSL";\n')
+
+env_tove.Append(BUILDERS={
+	'PackageSL':Builder(action=package_sl)})
+
+env_tove.PackageSL(
+	'tove2d/src/glsl/fill.frag.inc',
+	Glob('tove2d/src/glsl/fill.frag'))
+
+env_tove.PackageSL(
+	'tove2d/src/glsl/line.vert.inc',
+	Glob('tove2d/src/glsl/line.vert'))
+
+# patching.
+
+declare_vector_sprite = 'Node *createVectorSprite(Ref<Resource> p_resource, Node *p_owner);'
+replace_create = ('child = memnew(Sprite);', 'child = createVectorSprite(texture, target_node);')
+
+editor_plugins_path = Dir('../../editor/plugins').abspath
+with open(os.path.join(editor_plugins_path, 'canvas_item_editor_plugin.cpp'), 'r+') as f:
+	source_code = f.read()
+	if declare_vector_sprite not in source_code:
+		print("Do you allow vector_graphics to patch Godot to allow better SVG import (Y/n)?")
+		answer = raw_input().upper().strip()
+		if answer == 'Y' or answer == '':
+
+			lines = source_code.split("\n")
+			include_index = None
+			for i, line in enumerate(lines):
+				if line.strip().startswith('#include'):
+					include_index = i
+			lines.insert(include_index + 1, declare_vector_sprite)
+			source_code = "\n".join(lines)
+
+			source_code = source_code.replace(*replace_create)
+
+			f.seek(0)
+			f.write(source_code)
+			print("Patched. You might need to recompile once more.")

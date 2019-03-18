@@ -1,20 +1,24 @@
 Vector Graphics for Godot.
 
-Note:
+Please note:
 
-* This is experimental and very buggy
+* This is experimental
 * It's written in C++ 11, so it's editor-only
+* All vector graphics can be converted into meshes
 * I'm not currently working on this
 
 # Install and build
 
-* Check out this repo as git clone --recurse-submodules `https://github.com/poke1024/godot_vector_graphics`
-* Rename the whole repo folder to `vector_graphics` and it into your Godot `/modules` folder (i.e. as `/modules/vector_graphics`).
+* Check out this repo as `git clone --recurse-submodules https://github.com/poke1024/godot_vector_graphics`
+* Rename the whole repo folder to `vector_graphics` and move it into your Godot `/modules` folder (i.e. as `/modules/vector_graphics`).
 * Build godot using scons.
+* You will be asked if you allow the `vector_graphics` to patch Godot. Answer `y` in order to automatically patch one editor file, so that you can drag and drop SVGs as vector graphics into Godot (see the SVG Import Patch section below to see what is patched).
 
 # Basic usage in Godot
 
-Add a new VGPath node in your scene (under a Node2D).
+Drag and drop SVGs into the 2d canvas.
+
+Or: add a new VGPath node in your scene (under a Node2D).
 
 In the inspector, set its Renderer to a new VGAdaptiveRenderer. Now, in
 the toolbar at the top, click on the circle. Drag and drop on the canvas
@@ -31,7 +35,7 @@ Rendering quality can be changed by editing the VGAdaptiveRenderer's
 quality setting (lower number means less triangles). You can do this
 interactively in the Godot editor.
 
-# Enabling SVG import
+# The SVG Import Patch
 
 In order to be able to drag and drop SVG assets into the Godot editor
 as vector graphics, you need to make one patch in Godot; take a look at
