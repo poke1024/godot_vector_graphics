@@ -18,7 +18,7 @@ static Ref<Image> tove_graphics_rasterize(
 	const int h = p_height;
 
 	PoolVector<uint8_t> dst_image;
-	dst_image.resize(w * h * 4);
+	ERR_FAIL_COND_V(dst_image.resize(w * h * 4) != OK, Ref<Image>());
 
 	{
 		PoolVector<uint8_t>::Write dw = dst_image.write();
@@ -65,10 +65,10 @@ Rect2 VGTextureRenderer::render_mesh(Ref<ArrayMesh> &p_mesh, VGPath *p_path) {
 	PoolVector<float> tangents;
 	PoolVector<Vector2> uvs;
 
-	faces.resize(6);
-	normals.resize(6);
-	tangents.resize(6 * 4);
-	uvs.resize(6);
+	ERR_FAIL_COND_V(faces.resize(6) != OK, Rect2());
+	ERR_FAIL_COND_V(normals.resize(6) != OK, Rect2());
+	ERR_FAIL_COND_V(tangents.resize(6 * 4), Rect2());
+	ERR_FAIL_COND_V(uvs.resize(6), Rect2());
 
     Vector2 position = Vector2(bounds[0], bounds[1]);
     Vector2 size = Size2(w, h);
@@ -106,7 +106,7 @@ Rect2 VGTextureRenderer::render_mesh(Ref<ArrayMesh> &p_mesh, VGPath *p_path) {
 	}
 
     Array arr;
-    arr.resize(Mesh::ARRAY_MAX);
+    ERR_FAIL_COND_V(arr.resize(Mesh::ARRAY_MAX), Rect2());
 
 	arr[VS::ARRAY_VERTEX] = faces;
 	arr[VS::ARRAY_NORMAL] = normals;
