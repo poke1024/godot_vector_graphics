@@ -212,7 +212,7 @@ class VGTransformTool : public VGTool {
 		float x11 = p_pos[2].global.x, y11 = p_pos[2].global.y;
 		float phi = Math::atan2(y11 - y10, x11 - x10) + M_PI;
 		float mx = (x00 + x10) / 2, my = (y00 + y10) / 2;
-		float toplen = 30;
+		const float toplen = 50;
 		if (r_origin) {
 			*r_origin = Vector2(mx, my);
 		}
@@ -245,7 +245,7 @@ public:
 		if (mb.is_valid()) {
 			if (mb->get_button_index() == BUTTON_LEFT && mb->is_pressed()) {
 				const CanvasItem *pi = path->get_parent_item();
-				Transform2D xform = canvas_item_editor->get_canvas_transform() * (pi ? pi->get_global_transform() : Transform2D());
+				const Transform2D xform = canvas_item_editor->get_canvas_transform() * (pi ? pi->get_global_transform() : Transform2D());
 
 				const real_t grab_threshold = EDITOR_DEF("editors/poly_editor/point_grab_radius", 8);
 
@@ -253,24 +253,33 @@ public:
 				transform1 = transform0;
 
 				clicked = WIDGET_NONE;
-				Point2 q = mb->get_position();
-				q = xform.affine_inverse().xform(q);
 
-				Pos4 p;
-				get_corners(p, path->get_transform());
+				const Point2 q_canvas = mb->get_position();
+
+				Pos4 p_canvas;
+				get_corners(p_canvas, xform * path->get_transform());
 
 				for (int i = 0; i < 4; i++) {
-					if ((p[i].global - q).length() < grab_threshold) {
-						offset = p[i].global - q;
+					if ((p_canvas[i].global - q_canvas).length() < grab_threshold) {
+						Pos4 p;
+						get_corners(p, path->get_transform());
+						const Point2 q_inv = xform.affine_inverse().xform(q_canvas);
+		
+						offset = p[i].global - q_inv;
 						corner_widget.init(p, i);
 						corner_widget.t = xform;
 						clicked = WIDGET_CORNER;
 						return true;
 					}
 
-					Vector2 midpoint = (p[i].global + p[(i + 1) % 4].global) / 2;
-					if ((midpoint - q).length() < grab_threshold) {
-						offset = midpoint - q;
+					Vector2 midpoint = (p_canvas[i].global + p_canvas[(i + 1) % 4].global) / 2;
+					if ((midpoint - q_canvas).length() < grab_threshold) {
+						Pos4 p;
+						get_corners(p, path->get_transform());
+						const Point2 q_inv = xform.affine_inverse().xform(q_canvas);
+						Vector2 midpoint_inv = (p[i].global + p[(i + 1) % 4].global) / 2;
+				
+						offset = midpoint_inv - q_inv;
 						midpoint_widget.init(p, i);
 						midpoint_widget.t = xform;
 						clicked = WIDGET_MIDPOINT;
@@ -280,21 +289,23 @@ public:
 
 				//
 
-				xform = canvas_item_editor->get_canvas_transform() * path->get_global_transform();
+				Vector2 rot_pos = get_rotation_handle_position(p_canvas);
 
-				get_corners(p, xform);
-				Vector2 rot_pos = get_rotation_handle_position(p);
-				q = mb->get_position();
+				if ((rot_pos - q_canvas).length() < grab_threshold) {
+					/*Pos4 p;
+					get_corners(p, path->get_transform());
+					const Point2 q_inv = xform.affine_inverse().xform(q_canvas);
+					Vector2 rot_pos_inv = get_rotation_handle_position(p);
 
-				if ((rot_pos - q).length() < grab_threshold) {
-					offset = rot_pos - q;
-					rotate_widget.drag_from = canvas_item_editor->get_canvas_transform().affine_inverse().xform(mb->get_position());
+					offset = rot_pos_inv - q_inv;*/
+					offset = Vector2(0, 0); // not used for rotation
+					rotate_widget.drag_from = canvas_item_editor->get_canvas_transform().affine_inverse().xform(q_canvas);
 
 					Vector2 drag_rotation_center;
 					if (path->_edit_use_pivot()) {
-						drag_rotation_center = path->get_global_transform_with_canvas().xform(path->_edit_get_pivot());
+						drag_rotation_center = path->get_global_transform().xform(path->_edit_get_pivot());
 					} else {
-						drag_rotation_center = path->get_global_transform_with_canvas().get_origin();
+						drag_rotation_center = path->get_global_transform().get_origin();
 					}
 					rotate_widget.drag_rotation_center = drag_rotation_center;
 					rotate_widget.initial_angle = path->_edit_get_rotation();
@@ -1317,8 +1328,12 @@ void VGEditor::_bind_methods() {
 
 void VGCurveTool::_commit_action() {
 
+	undo_redo->add_do_method(node_vg, "recenter");
+	undo_redo->add_undo_method(node_vg, "recenter");
+
 	undo_redo->add_do_method(canvas_item_editor->get_viewport_control(), "update");
 	undo_redo->add_undo_method(canvas_item_editor->get_viewport_control(), "update");
+
 	undo_redo->commit_action();
 }
 

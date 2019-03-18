@@ -77,7 +77,10 @@ static Point2 compute_center(const tove::PathRef &p_path) {
 }
 
 void VGPath::recenter() {
-	compute_center(tove_path);
+	Point2 center = compute_center(tove_path);
+	tove_path->set(tove_path, tove::nsvg::Transform(1, 0, -center.x, 0, 1, -center.y));
+	vg_transform.translate(center.x, center.y);
+
 	set_position(get_position() + get_transform().untranslated().xform(vg_transform.elements[2]));
 	vg_transform = vg_transform.untranslated();
 	set_dirty();
