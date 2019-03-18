@@ -227,6 +227,22 @@ void VGPath::_bubble_change() {
 	}
 }
 
+void VGPath::_transform_changed(Node *p_node) {
+	if (p_node->is_class_ptr(get_class_ptr_static())) {
+		VGPath *path = Object::cast_to<VGPath>(p_node);
+		Ref<VGRenderer> renderer = path->get_inherited_renderer();
+		if (renderer.is_valid() && renderer->is_dirty_on_transform_change()) {
+			path->set_dirty();
+		}
+	}
+
+	/*const int n = p_node->get_child_count();
+	for (int i = 0; i < n; i++) {
+		Node *child = p_node->get_child(i);
+		_transform_changed(child);
+	}*/
+}
+
 void VGPath::_notification(int p_what) {
 
 	switch (p_what) {
@@ -250,6 +266,7 @@ void VGPath::_notification(int p_what) {
 		case NOTIFICATION_TRANSFORM_CHANGED: {
 			if (is_inside_tree()) {
 				_bubble_change();
+				_transform_changed(this);
 			}
 		} break;
 	}
@@ -662,6 +679,7 @@ VGPath::VGPath() {
 }
 
 VGPath::VGPath(tove::PathRef p_path) {
+	set_notify_transform(true);
 	set_tove_path(p_path);
 }
 

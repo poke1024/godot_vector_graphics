@@ -23,6 +23,8 @@ public:
     virtual Ref<ImageTexture> render_texture(VGPath *p_path) {
         return Ref<ImageTexture>();
     }
+
+    virtual bool is_dirty_on_transform_change() const = 0;
 };
 
 #endif // VG_RENDERER_H
