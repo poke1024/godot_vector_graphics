@@ -11,9 +11,7 @@
 class VGGradient : public VGPaint {
 	GDCLASS(VGGradient, VGPaint);
 
-    Vector2 p1;
-    Vector2 p2;
-    Ref<Gradient> gradient;
+    Ref<Gradient> color_ramp;
 
     void _gradient_changed();
 
@@ -23,13 +21,7 @@ protected:
 public:
     VGGradient();
 
-    void set_p1(const Vector2 &p_p1);
-    Vector2 get_p1() const;
-
-    void set_p2(const Vector2 &p_p2);
-    Vector2 get_p2() const;
-
-    void set_color_ramp(const Ref<Gradient> &p_gradient);
+    void set_color_ramp(const Ref<Gradient> &p_color_ramp);
     Ref<Gradient> get_color_ramp() const;
 };
 

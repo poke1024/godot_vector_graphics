@@ -6,7 +6,8 @@
 #include "core/os/file_access.h"
 #include "editor/editor_node.h"
 #include "vector_graphics_color.h"
-#include "vector_graphics_gradient.h"
+#include "vector_graphics_linear_gradient.h"
+#include "vector_graphics_radial_gradient.h"
 #include "vector_graphics_adaptive_renderer.h"
 
 static tove::PaintRef to_tove_paint(Ref<VGPaint> p_paint) {
@@ -16,16 +17,31 @@ static tove::PaintRef to_tove_paint(Ref<VGPaint> p_paint) {
 		if (gradient.is_null()) {
 			return tove::PaintRef();
 		} else {
-			Vector2 p1 = gradient->get_p1();
-			Vector2 p2 = gradient->get_p2();
-			auto tove_grad = tove::tove_make_shared<tove::LinearGradient>(
-				p1.x, p1.y, p2.x, p2.y);
+			Ref<VGLinearGradient> linear_gradient = p_paint;
+			Ref<VGRadialGradient> radial_gradient = p_paint;
+
+			tove::PaintRef tove_gradient;
+
+			if (!linear_gradient.is_null()) {
+				Vector2 p1 = linear_gradient->get_p1();
+				Vector2 p2 = linear_gradient->get_p2();
+				tove_gradient = tove::tove_make_shared<tove::LinearGradient>(
+					p1.x, p1.y, p2.x, p2.y);
+			} else if (!radial_gradient.is_null()) {
+				Vector2 center = radial_gradient->get_center();
+				Vector2 focal = radial_gradient->get_focal();
+				float radius = radial_gradient->get_radius();
+				tove_gradient = tove::tove_make_shared<tove::RadialGradient>(
+					center.x, center.y, focal.x, focal.y, radius);
+			} else {
+				return tove::PaintRef();
+			}
 
 			Ref<Gradient> color_ramp = gradient->get_color_ramp();
 			if (!color_ramp.is_null()) {
 				Vector<Gradient::Point> &p = color_ramp->get_points();
 				for (int i = 0; i < p.size(); i++) {
-					tove_grad->addColorStop(
+					tove_gradient->addColorStop(
 						p[i].offset,
 						p[i].color.r,
 						p[i].color.g,
@@ -34,7 +50,7 @@ static tove::PaintRef to_tove_paint(Ref<VGPaint> p_paint) {
 				}
 			}
 
-			return tove_grad;
+			return tove_gradient;
 		}
 	} else {
 		const Color c = color->get_color();

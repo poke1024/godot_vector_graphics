@@ -8,6 +8,8 @@
 #include "vector_graphics_paint.h"
 #include "vector_graphics_color.h"
 #include "vector_graphics_gradient.h"
+#include "vector_graphics_linear_gradient.h"
+#include "vector_graphics_radial_gradient.h"
 #include "vector_graphics_renderer.h"
 #include "vector_graphics_texture_renderer.h"
 #include "vector_graphics_adaptive_renderer.h"
@@ -34,9 +36,11 @@ void register_vector_graphics_types() {
 #endif
 
 	ClassDB::register_class<VGPath>();
-	ClassDB::register_class<VGPaint>();
+	//ClassDB::register_class<VGPaint>();
 	ClassDB::register_class<VGColor>();
-	ClassDB::register_class<VGGradient>();
+	//ClassDB::register_class<VGGradient>();
+	ClassDB::register_class<VGLinearGradient>();
+	ClassDB::register_class<VGRadialGradient>();
 
 	ClassDB::register_class<VGRenderer>();
 	ClassDB::register_class<VGTextureRenderer>();
