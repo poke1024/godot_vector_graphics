@@ -40,19 +40,21 @@ public:
             VGPath *path = Object::cast_to<VGPath>(p_node);
             Ref<VGRenderer> renderer = path->get_inherited_renderer();
             if (renderer.is_valid() && renderer->is_class_ptr(VGMeshRenderer::get_class_ptr_static())) {
-                tove::TesselatorRef tesselator =
-                    Object::cast_to<VGMeshRenderer>(renderer.ptr())->get_tesselator();
-                if (tesselator) {
-                    Size2 s = path->get_global_transform().get_scale();
-                    tesselator->beginTesselate(root_graphics.get(), MAX(s.width, s.height));
+                Ref<VGMeshRenderer> meshRenderer = Object::cast_to<VGMeshRenderer>(renderer.ptr());
+                if (meshRenderer.is_valid()) {
+                    tove::TesselatorRef tesselator = meshRenderer->get_tesselator();
+                    if (tesselator) {
+                        Size2 s = path->get_global_transform().get_scale();
+                        tesselator->beginTesselate(root_graphics.get(), MAX(s.width, s.height));
 
-                    tesselator->pathToMesh(
-                        UPDATE_MESH_EVERYTHING,
-                        new_transformed_path(path->get_tove_path(), p_transform),
-                        tove_mesh, tove_mesh,
-                        fill_index, line_index);
+                        tesselator->pathToMesh(
+                            UPDATE_MESH_EVERYTHING,
+                            new_transformed_path(path->get_tove_path(), p_transform),
+                            tove_mesh, tove_mesh,
+                            fill_index, line_index);
 
-                    tesselator->endTesselate();
+                        tesselator->endTesselate();
+                    }
                 }
             }
         }
