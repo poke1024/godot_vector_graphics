@@ -13,6 +13,7 @@ env_tove.add_source_files(env.modules_sources, "tove2d/src/cpp/shader/*.cpp")
 env_tove.add_source_files(env.modules_sources, "tove2d/src/cpp/gpux/*.cpp")
 env_tove.add_source_files(env.modules_sources, "tove2d/src/thirdparty/*.cpp")
 env_tove.add_source_files(env.modules_sources, "tove2d/src/thirdparty/polypartition/src/*.cpp")
+env_tove.add_source_files(env.modules_sources, "tove2d/src/thirdparty/tinyxml2/tinyxml2.cpp")
 
 import os 
 dir_path = Dir('.').abspath

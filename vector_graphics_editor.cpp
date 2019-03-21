@@ -628,6 +628,7 @@ class VGCurveTool : public VGTool {
 	uint64_t mb_down_time;
 	Vector2 mb_down_where;
 	SubpathPos mb_down_at;
+	bool aligned_move;
 
 	void remove_point(const Vertex &p_vertex);
 	Vertex get_active_point() const;
@@ -687,6 +688,7 @@ public:
 						edited_point = PosVertex();
 						edited_path = SubpathId();
 						hover_point = Vertex();
+						aligned_move = !mb->get_alt();
 
 						if (insert.valid()) {
 
@@ -798,7 +800,7 @@ public:
 					edited_point = PosVertex(edited_point, cpoint);
 
 					tove::SubpathRef subpath = node_vg->get_subpath(edited_point.subpath);
-					subpath->move(edited_point.pt, cpoint.x, cpoint.y);
+					subpath->move(edited_point.pt, cpoint.x, cpoint.y, aligned_move ? TOVE_HANDLE_ALIGNED : TOVE_HANDLE_FREE);
 
 					node_vg->set_dirty();
 					canvas_item_editor->get_viewport_control()->update();
