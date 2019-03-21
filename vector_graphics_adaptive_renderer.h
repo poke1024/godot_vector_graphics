@@ -7,8 +7,8 @@
 
 #include "vector_graphics_mesh_renderer.h"
 
-class VGAdaptiveRenderer : public VGMeshRenderer {
-	GDCLASS(VGAdaptiveRenderer, VGRenderer);
+class VGMeshRenderer : public VGAbstractMeshRenderer {
+	GDCLASS(VGMeshRenderer, VGRenderer);
 
     float quality;
 
@@ -18,7 +18,7 @@ protected:
 	static void _bind_methods();
 
 public:
-    VGAdaptiveRenderer();
+    VGMeshRenderer();
 
     float get_quality();
     void set_quality(float p_quality);

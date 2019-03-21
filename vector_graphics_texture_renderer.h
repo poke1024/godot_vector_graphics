@@ -8,8 +8,8 @@
 #include "vector_graphics_renderer.h"
 #include "utils.h"
 
-class VGTextureRenderer : public VGRenderer {
-	GDCLASS(VGTextureRenderer, VGRenderer);
+class VGSpriteRenderer : public VGRenderer {
+	GDCLASS(VGSpriteRenderer, VGRenderer);
 
     float quality;
 
@@ -17,7 +17,11 @@ protected:
 	static void _bind_methods();
 
 public:
-    VGTextureRenderer();
+    VGSpriteRenderer();
+
+    virtual bool prefer_sprite() const {
+        return true;
+    }
 
     float get_quality();
     void set_quality(float p_quality);

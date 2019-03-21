@@ -91,13 +91,14 @@ public:
 	void set_tove_path(tove::PathRef p_path);
 	void recenter();
 
-	MeshInstance2D *create_mesh_node();
+	Node2D *create_mesh_node();
 
 	VGPath();
 	VGPath(tove::PathRef p_path);
 	virtual ~VGPath();
 
-	static VGPath *createFromSVG(Ref<Resource> p_resource, Node *p_owner);
+	static VGPath *create_from_svg(Ref<Resource> p_resource);
+	void import_svg(const String &p_path);
 };
 
 #endif // VG_PATH_H

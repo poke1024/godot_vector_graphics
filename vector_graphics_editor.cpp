@@ -1036,13 +1036,38 @@ void VGEditor::_tool_selected(int p_tool) {
 				tool = Ref<VGTool>(memnew(VGCurveTool(this, node_vg)));
 				break;
 
-			case TOOL_ELLIPSE:
+			/*case TOOL_ELLIPSE:
 				tool = Ref<VGTool>(memnew(VGEllipseTool(node_vg)));
-				break;
+				break;*/
 		}
 	}
 
 	canvas_item_editor->get_viewport_control()->update();
+}
+
+void VGEditor::_node_replace_owner_do(Node *p_base, Node *p_node, Node *p_root) {
+
+	if (p_node->get_owner() == p_base && p_node != p_root) {
+		//undo_redo->add_do_method(p_node, "set_owner", p_root);
+	}
+
+	for (int i = 0; i < p_node->get_child_count(); i++) {
+		//undo_redo->add_do_method(p_node, "remove_child", p_node->get_child(i));
+		_node_replace_owner_do(p_base, p_node->get_child(i), p_root);
+	}
+}
+
+void VGEditor::_node_replace_owner_undo(Node *p_base, Node *p_node, Node *p_root) {
+
+	if (/*p_node->get_owner() == p_base &&*/ p_node != p_root) {
+		undo_redo->add_undo_method(p_node, "set_owner", p_root);
+	}
+	undo_redo->add_undo_reference(p_node);
+
+	for (int i = 0; i < p_node->get_child_count(); i++) {
+		//undo_redo->add_undo_method(p_node, "add_child", p_node->get_child(i));
+		_node_replace_owner_undo(p_base, p_node->get_child(i), p_root);
+	}
 }
 
 void VGEditor::_create_mesh_node() {
@@ -1051,24 +1076,33 @@ void VGEditor::_create_mesh_node() {
 		return;
 	}
 
-	MeshInstance2D *baked = node_vg->create_mesh_node();
+	Node2D *baked = node_vg->create_mesh_node();
+	if (!baked) {
+		return;
+	}
+
+	//EditorNode::get_singleton()->get_scene_tree_dock()->replace_node(node_vg, baked);
 
 	Node *parent = node_vg->get_parent();
 
-	// for some reason, combining the following two actions into one won't work.
+	undo_redo->create_action(TTR("Meshify"));
 
-	undo_redo->create_action(TTR("Create Mesh Node"));
-	undo_redo->add_do_method(parent, "add_child_below_node", node_vg, baked);
+	undo_redo->add_do_method(parent, "remove_child", node_vg);
+	undo_redo->add_do_method(parent, "add_child", baked);
+	undo_redo->add_do_method(parent, "move_child", baked, node_vg->get_index());
 	undo_redo->add_do_method(baked, "set_owner", node_vg->get_owner());
+	_node_replace_owner_do(baked, baked, node_vg->get_owner());
 	undo_redo->add_do_reference(baked);
-	undo_redo->add_undo_method(parent, "remove_child", baked);
-	undo_redo->commit_action();
+	//undo_redo->commit_action();
 
-	undo_redo->create_action(TTR("Remove VG Node"));
-	undo_redo->add_do_method(parent, "remove_child", node_vg);	
-	undo_redo->add_undo_method(parent, "add_child_below_node", baked, node_vg);
-	undo_redo->add_undo_method(node_vg, "set_owner", baked->get_owner());
+	undo_redo->add_undo_method(parent, "remove_child", baked);
+	undo_redo->add_undo_method(parent, "add_child", node_vg);
+	undo_redo->add_undo_method(parent, "move_child", node_vg, node_vg->get_index());
+	undo_redo->add_undo_method(node_vg, "set_owner", node_vg->get_owner());
+	_node_replace_owner_undo(node_vg, node_vg, node_vg->get_owner());
 	undo_redo->add_undo_reference(node_vg);
+
+	//undo_redo->create_action(TTR("Remove VG Node"));
 	undo_redo->commit_action();
 }
 
@@ -1080,7 +1114,7 @@ void VGEditor::_notification(int p_what) {
 
 			tool_buttons[0]->set_icon(EditorNode::get_singleton()->get_gui_base()->get_icon("ToolSelect", "EditorIcons"));
 			tool_buttons[1]->set_icon(EditorNode::get_singleton()->get_gui_base()->get_icon("EditBezier", "EditorIcons"));
-			tool_buttons[2]->set_icon(EditorNode::get_singleton()->get_gui_base()->get_icon("SphereShape", "EditorIcons"));
+			//tool_buttons[2]->set_icon(EditorNode::get_singleton()->get_gui_base()->get_icon("SphereShape", "EditorIcons"));
 
 			button_bake->set_icon(EditorNode::get_singleton()->get_gui_base()->get_icon("MeshInstance2D", "EditorIcons"));			
 

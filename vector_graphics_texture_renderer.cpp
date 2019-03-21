@@ -32,26 +32,26 @@ static Ref<Image> tove_graphics_rasterize(
 	return image;
 }
 
-VGTextureRenderer::VGTextureRenderer() : quality(1) {
+VGSpriteRenderer::VGSpriteRenderer() : quality(1) {
 }
 
-float VGTextureRenderer::get_quality() {
+float VGSpriteRenderer::get_quality() {
 	return quality;
 }
 
-void VGTextureRenderer::set_quality(float p_quality) {
+void VGSpriteRenderer::set_quality(float p_quality) {
 	quality = p_quality;
 	emit_changed();
 }
 
-void VGTextureRenderer::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_quality", "quality"), &VGTextureRenderer::set_quality);
-	ClassDB::bind_method(D_METHOD("get_quality"), &VGTextureRenderer::get_quality);
+void VGSpriteRenderer::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_quality", "quality"), &VGSpriteRenderer::set_quality);
+	ClassDB::bind_method(D_METHOD("get_quality"), &VGSpriteRenderer::get_quality);
 
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "quality", PROPERTY_HINT_RANGE, "0,1,0.01"), "set_quality", "get_quality");
 }
 
-Rect2 VGTextureRenderer::render_mesh(Ref<ArrayMesh> &p_mesh, VGPath *p_path) {
+Rect2 VGSpriteRenderer::render_mesh(Ref<ArrayMesh> &p_mesh, VGPath *p_path) {
 
     // const float resolution = quality;
     tove::GraphicsRef graphics = p_path->get_subtree_graphics();
@@ -119,7 +119,7 @@ Rect2 VGTextureRenderer::render_mesh(Ref<ArrayMesh> &p_mesh, VGPath *p_path) {
     return tove_bounds_to_rect2(p_path->get_tove_path()->getExactBounds());
 }
 
-Ref<ImageTexture> VGTextureRenderer::render_texture(VGPath *p_path) {
+Ref<ImageTexture> VGSpriteRenderer::render_texture(VGPath *p_path) {
 
     // VGPath *root = p_path->get_root_path();
 

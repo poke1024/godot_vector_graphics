@@ -41,7 +41,7 @@ class VGEditor : public HBoxContainer {
 	enum {
 		TOOL_TRANSFORM = 0,
 		TOOL_CURVE,
-		TOOL_ELLIPSE
+		//TOOL_ELLIPSE
 	};
 
 	ToolButton *button_bake;
@@ -53,6 +53,9 @@ class VGEditor : public HBoxContainer {
 
 protected:
 	UndoRedo *undo_redo;
+
+	void _node_replace_owner_do(Node *p_base, Node *p_node, Node *p_root);
+	void _node_replace_owner_undo(Node *p_base, Node *p_node, Node *p_root);
 
 	virtual void _tool_selected(int p_tool);
 	void _create_mesh_node();

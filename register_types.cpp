@@ -43,8 +43,8 @@ void register_vector_graphics_types() {
 	ClassDB::register_class<VGRadialGradient>();
 
 	//ClassDB::register_class<VGRenderer>();
-	ClassDB::register_class<VGTextureRenderer>();
-	ClassDB::register_class<VGAdaptiveRenderer>();
+	ClassDB::register_class<VGSpriteRenderer>();
+	ClassDB::register_class<VGMeshRenderer>();
 
 #ifdef TOOLS_ENABLED
 	EditorNode::add_init_callback(editor_init_callback);

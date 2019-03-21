@@ -8,14 +8,14 @@
 #include "vector_graphics_renderer.h"
 #include "utils.h"
 
-class VGMeshRenderer : public VGRenderer {
+class VGAbstractMeshRenderer : public VGRenderer {
 protected:
     tove::TesselatorRef tesselator;
 
 	static void _bind_methods();
 
 public:
-    VGMeshRenderer();
+    VGAbstractMeshRenderer();
 
     const tove::TesselatorRef &get_tesselator() const {
         return tesselator;

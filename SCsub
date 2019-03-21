@@ -51,8 +51,18 @@ env_vars.Add(EnumVariable(
 env_vars.Update(env)
 
 if env['svg'] == 'patch':
-	declare_vector_sprite = 'Node *createVectorSprite(Ref<Resource> p_resource, Node *p_owner);'
-	replace_create = ('child = memnew(Sprite);', 'child = createVectorSprite(texture, target_node);')
+	declare_vector_sprite = '''
+Node *createVectorSprite(Ref<Resource> p_resource);
+void configureVectorSprite(Node *p_child, Ref<Resource> p_texture);
+	'''
+	replace_create = (
+		('child = memnew(Sprite);',
+		'child = createVectorSprite(texture);'),
+
+		('_create_nodes(target_node, child, path, drop_pos);',
+		'_create_nodes(target_node, child, path, drop_pos); configureVectorSprite(child, texture);')
+	)
+
 
 	editor_plugins_path = Dir('../../editor/plugins').abspath
 	file_path = os.path.join(editor_plugins_path, 'canvas_item_editor_plugin.cpp')
@@ -67,7 +77,8 @@ if env['svg'] == 'patch':
 				lines.insert(include_index + 1, declare_vector_sprite)
 				source_code = "\n".join(lines)
 
-				source_code = source_code.replace(*replace_create)
+				for a, b in replace_create:
+					source_code = source_code.replace(a, b)
 
 				f.seek(0)
 				f.write(source_code)

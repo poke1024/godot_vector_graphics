@@ -5,6 +5,7 @@
 #include "vector_graphics_path.h"
 #include "core/os/file_access.h"
 #include "editor/editor_node.h"
+#include "scene/2d/sprite.h"
 #include "vector_graphics_color.h"
 #include "vector_graphics_linear_gradient.h"
 #include "vector_graphics_radial_gradient.h"
@@ -74,6 +75,49 @@ static Ref<VGPaint> from_tove_paint(const tove::PaintRef &p_paint) {
 static Point2 compute_center(const tove::PathRef &p_path) {
 	const float *bounds = p_path->getBounds();
 	return Point2((bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2);
+}
+
+void VGPath::import_svg(const String &p_path) {
+
+	String units = "px";
+	float dpi = 96.0;
+
+	Vector<uint8_t> buf = FileAccess::get_file_as_array(p_path);
+
+	String str;
+	str.parse_utf8((const char *)buf.ptr(), buf.size());
+
+	tove::GraphicsRef tove_graphics = tove::Graphics::createFromSVG(
+		str.utf8().ptr(), units.utf8().ptr(), dpi);
+
+	const float *bounds = tove_graphics->getBounds();
+
+	float s = 256.0f / MAX(bounds[2] - bounds[0], bounds[3] - bounds[1]);
+	if (s > 1.0f) {
+		tove::nsvg::Transform transform(s, 0, 0, 0, s, 0);
+		transform.setWantsScaleLineWidth(true);
+		tove_graphics->set(tove_graphics, transform);
+	}
+
+	const int n = tove_graphics->getNumPaths();
+	for (int i = 0; i < n; i++) {
+		tove::PathRef tove_path = tove_graphics->getPath(i);
+		Point2 center = compute_center(tove_path);
+		tove_path->set(tove_path, tove::nsvg::Transform(1, 0, -center.x, 0, 1, -center.y));
+
+		VGPath *path = memnew(VGPath(tove_path));
+		path->set_position(center);
+
+		std::string name = tove_path->getName();
+		if (name.empty()) {
+			name = "path";
+		}
+
+		path->set_name(String(name.c_str()));
+
+		add_child(path);
+		path->set_owner(get_owner());
+	}
 }
 
 void VGPath::recenter() {
@@ -297,6 +341,8 @@ void VGPath::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_renderer_changed"), &VGPath::_renderer_changed);
 	ClassDB::bind_method(D_METHOD("recenter"), &VGPath::recenter);
+
+	ClassDB::bind_method(D_METHOD("import_svg", "path"), &VGPath::import_svg);
 }
 
 bool VGPath::_set(const StringName &p_name, const Variant &p_value) {
@@ -625,23 +671,41 @@ tove::GraphicsRef VGPath::get_subtree_graphics() const {
 	return subtree_graphics;
 }
 
-MeshInstance2D *VGPath::create_mesh_node() {
-	MeshInstance2D *mesh_inst = memnew(MeshInstance2D);
+Node2D *VGPath::create_mesh_node() {
 
 	Ref<VGRenderer> renderer = get_inherited_renderer();
 	if (renderer.is_valid()) {
-		Ref<ArrayMesh> mesh;
-		mesh.instance();
+		if (renderer->prefer_sprite()) {
+			Sprite *sprite = memnew(Sprite);
+			sprite->set_texture(renderer->render_texture(this));
 
-		renderer->render_mesh(mesh, this);
-		mesh_inst->set_mesh(mesh);
-		mesh_inst->set_texture(renderer->render_texture(this));		
+			//Size2 s = get_global_transform().get_scale();
+			Size2 s = get_transform().get_scale();
+			float scale = MAX(s.width, s.height);
 
-		mesh_inst->set_transform(get_transform());
-		mesh_inst->set_name("Meshed " + get_name());
+			Transform2D t;
+			t.scale(Size2(scale, scale));
+
+			sprite->set_transform(get_transform() * t.affine_inverse());
+			sprite->set_name(get_name());
+			sprite->set_centered(false);
+
+			return sprite;
+		} else {
+			MeshInstance2D *mesh_inst = memnew(MeshInstance2D);
+			Ref<ArrayMesh> mesh;
+			mesh.instance();
+			renderer->render_mesh(mesh, this);
+			mesh_inst->set_mesh(mesh);
+			mesh_inst->set_texture(renderer->render_texture(this));	
+
+			mesh_inst->set_transform(get_transform());
+			mesh_inst->set_name(get_name());
+			return mesh_inst;
+		}
 	}
 
-	return mesh_inst;
+	return NULL;
 }
 
 void VGPath::set_tove_path(tove::PathRef p_path) {
@@ -662,7 +726,7 @@ VGPath::VGPath() {
 
 	// when created as a unique item from the UI, populate with default content.
 
-	Ref<VGAdaptiveRenderer> renderer;
+	Ref<VGMeshRenderer> renderer;
 	renderer.instance();
 	set_renderer(renderer);
 
@@ -692,65 +756,26 @@ VGPath::~VGPath() {
 	}
 }
 
-VGPath *VGPath::createFromSVG(Ref<Resource> p_resource, Node *p_owner) {
-
+VGPath *VGPath::create_from_svg(Ref<Resource> p_resource) {
 	if (!p_resource->get_path().ends_with(".svg")) {
 		return NULL;
 	}
 
-	String path = p_resource->get_path();
-	String units = "px";
-	float dpi = 96.0;
-
-	Vector<uint8_t> buf = FileAccess::get_file_as_array(path);
-
-	String str;
-	str.parse_utf8((const char *)buf.ptr(), buf.size());
-
-	tove::GraphicsRef tove_graphics = tove::Graphics::createFromSVG(
-		str.utf8().ptr(), units.utf8().ptr(), dpi);
-
 	VGPath *root = memnew(VGPath(tove::tove_make_shared<tove::Path>()));
-	root->set_owner(p_owner);
 
-	Ref<VGAdaptiveRenderer> renderer;
+	Ref<VGMeshRenderer> renderer;
 	renderer.instance();
 	root->set_renderer(renderer);
-
-	const float *bounds = tove_graphics->getBounds();
-
-	float s = 256.0f / MAX(bounds[2] - bounds[0], bounds[3] - bounds[1]);
-	if (s > 1.0f) {
-		tove::nsvg::Transform transform(s, 0, 0, 0, s, 0);
-		transform.setWantsScaleLineWidth(true);
-		tove_graphics->set(tove_graphics, transform);
-	}
-
-	const int n = tove_graphics->getNumPaths();
-	for (int i = 0; i < n; i++) {
-		tove::PathRef tove_path = tove_graphics->getPath(i);
-		Point2 center = compute_center(tove_path);
-		tove_path->set(tove_path, tove::nsvg::Transform(1, 0, -center.x, 0, 1, -center.y));
-
-		VGPath *path = memnew(VGPath(tove_path));
-		path->set_position(center);
-
-		std::string name = tove_path->getName();
-		if (name.empty()) {
-			name = "path";
-		}
-
-		path->set_name(String(name.c_str()));
-		root->add_child(path);
-		path->_set_owner_nocheck(p_owner); // our parent is orphaned currently.
-	}
-
-	//clip_set = tove_graphics->getClipSet();
-	//set_dirty();
 
 	return root;
 }
 
-Node *createVectorSprite(Ref<Resource> p_resource, Node *p_owner) {
-	return VGPath::createFromSVG(p_resource, p_owner);
+Node *createVectorSprite(Ref<Resource> p_resource) {
+	return VGPath::create_from_svg(p_resource);
+}
+
+void configureVectorSprite(Node *p_child, Ref<Resource> p_resource) {
+	EditorData *editor_data = EditorNode::get_singleton()->get_scene_tree_dock()->get_editor_data();
+	editor_data->get_undo_redo().add_do_method(p_child, "import_svg", p_resource->get_path());
+	editor_data->get_undo_redo().add_do_reference(p_child);
 }

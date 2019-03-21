@@ -17,9 +17,14 @@ protected:
     static void clear_mesh(Ref<ArrayMesh> &p_mesh);
 
 public:
+    virtual bool prefer_sprite() const {
+        return false;
+    }
+
     virtual Rect2 render_mesh(Ref<ArrayMesh> &p_mesh, VGPath *p_path) {
         return Rect2();
     }
+
     virtual Ref<ImageTexture> render_texture(VGPath *p_path) {
         return Ref<ImageTexture>();
     }

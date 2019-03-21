@@ -39,8 +39,8 @@ public:
         if (p_node->is_class_ptr(VGPath::get_class_ptr_static())) {
             VGPath *path = Object::cast_to<VGPath>(p_node);
             Ref<VGRenderer> renderer = path->get_inherited_renderer();
-            if (renderer.is_valid() && renderer->is_class_ptr(VGMeshRenderer::get_class_ptr_static())) {
-                Ref<VGMeshRenderer> meshRenderer = Object::cast_to<VGMeshRenderer>(renderer.ptr());
+            if (renderer.is_valid() && renderer->is_class_ptr(VGAbstractMeshRenderer::get_class_ptr_static())) {
+                Ref<VGAbstractMeshRenderer> meshRenderer = Object::cast_to<VGAbstractMeshRenderer>(renderer.ptr());
                 if (meshRenderer.is_valid()) {
                     tove::TesselatorRef tesselator = meshRenderer->get_tesselator();
                     if (tesselator) {
@@ -61,10 +61,10 @@ public:
     }
 };
 
-VGMeshRenderer::VGMeshRenderer() {
+VGAbstractMeshRenderer::VGAbstractMeshRenderer() {
 }
 
-Rect2 VGMeshRenderer::render_mesh(Ref<ArrayMesh> &p_mesh, VGPath *p_path) {
+Rect2 VGAbstractMeshRenderer::render_mesh(Ref<ArrayMesh> &p_mesh, VGPath *p_path) {
 	clear_mesh(p_mesh);
 
     VGPath *root = p_path->get_root_path();
@@ -79,6 +79,6 @@ Rect2 VGMeshRenderer::render_mesh(Ref<ArrayMesh> &p_mesh, VGPath *p_path) {
     return tove_bounds_to_rect2(p_path->get_tove_path()->getBounds());
 }
 
-Ref<ImageTexture> VGMeshRenderer::render_texture(VGPath *p_path) {
+Ref<ImageTexture> VGAbstractMeshRenderer::render_texture(VGPath *p_path) {
     return Ref<ImageTexture>();
 }
