@@ -64,17 +64,25 @@ public:
 VGAbstractMeshRenderer::VGAbstractMeshRenderer() {
 }
 
-Rect2 VGAbstractMeshRenderer::render_mesh(Ref<ArrayMesh> &p_mesh, VGPath *p_path) {
-	clear_mesh(p_mesh);
+Rect2 VGAbstractMeshRenderer::render_mesh(Ref<ArrayMesh> &p_mesh, Ref<Material> &r_material, Ref<Texture> &r_texture, VGPath *p_path, bool p_hq) {
+	
+    clear_mesh(p_mesh);
 
     VGPath *root = p_path->get_root_path();
     tove::GraphicsRef subtree_graphics = root->get_subtree_graphics();
 		
-    tove::MeshRef tove_mesh = tove::tove_make_shared<tove::ColorMesh>();
+    tove::MeshRef tove_mesh;
+    
+    if (p_hq) {
+        tove_mesh = tove::tove_make_shared<tove::PaintMesh>();
+    } else {
+        tove_mesh = tove::tove_make_shared<tove::ColorMesh>();
+    }
+    
     Renderer r(tove_mesh, subtree_graphics);
     r.traverse(p_path, Transform2D());
 
-    copy_mesh(p_mesh, tove_mesh);
+    r_material = copy_mesh(p_mesh, tove_mesh, subtree_graphics, r_texture);
 
     return tove_bounds_to_rect2(p_path->get_tove_path()->getBounds());
 }

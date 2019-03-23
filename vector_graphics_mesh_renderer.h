@@ -21,7 +21,7 @@ public:
         return tesselator;
     }
 
-    virtual Rect2 render_mesh(Ref<ArrayMesh> &p_mesh, VGPath *p_path);
+    virtual Rect2 render_mesh(Ref<ArrayMesh> &p_mesh, Ref<Material> &r_material, Ref<Texture> &r_texture, VGPath *p_path, bool p_hq);
     virtual Ref<ImageTexture> render_texture(VGPath *p_path);
 
     virtual bool is_dirty_on_transform_change() const {

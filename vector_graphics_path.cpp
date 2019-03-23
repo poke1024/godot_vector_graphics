@@ -40,7 +40,7 @@ static tove::PaintRef to_tove_paint(Ref<VGPaint> p_paint) {
 
 			Ref<Gradient> color_ramp = gradient->get_color_ramp();
 			if (!color_ramp.is_null()) {
-				Vector<Gradient::Point> &p = color_ramp->get_points();
+				const Vector<Gradient::Point> &p = color_ramp->get_points();
 				for (int i = 0; i < p.size(); i++) {
 					tove_gradient->addColorStop(
 						p[i].offset,
@@ -61,12 +61,53 @@ static tove::PaintRef to_tove_paint(Ref<VGPaint> p_paint) {
 
 static Ref<VGPaint> from_tove_paint(const tove::PaintRef &p_paint) {
 	if (p_paint) {
-		ToveRGBA rgba;
-		p_paint->getRGBA(rgba, 1.0f);
-		Ref<VGColor> color;
-		color.instance();
-		color->set_color(Color(rgba.r, rgba.g, rgba.b, rgba.a));
-		return color;
+		if (p_paint->isGradient()) {
+			Ref<Gradient> color_ramp;
+			color_ramp.instance();
+
+			auto grad = std::dynamic_pointer_cast<tove::AbstractGradient>(p_paint);
+
+			Vector<Gradient::Point> points;
+			for (int i = 0; i < grad->getNumColorStops(); i++) {
+				Gradient::Point p;
+				ToveRGBA rgba;
+				p.offset = grad->getColorStop(i, rgba, 1.0f);
+				p.color = Color(rgba.r, rgba.g, rgba.b, rgba.a);
+				points.push_back(p);
+			}
+			color_ramp->set_points(points);
+
+			ToveGradientParameters params;
+			grad->getGradientParameters(params);
+
+			auto lgrad = std::dynamic_pointer_cast<tove::LinearGradient>(p_paint);
+			auto rgrad = std::dynamic_pointer_cast<tove::RadialGradient>(p_paint);
+			if (lgrad.get()) {
+				Ref<VGLinearGradient> linear_gradient;
+				linear_gradient.instance();
+				linear_gradient->set_p1(Vector2(params.values[0], params.values[1]));
+				linear_gradient->set_p2(Vector2(params.values[2], params.values[3]));
+				linear_gradient->set_color_ramp(color_ramp);
+				return linear_gradient;
+			} else if (rgrad.get()) {
+				Ref<VGRadialGradient> radial_gradient;
+				radial_gradient.instance();
+				radial_gradient->set_center(Vector2(params.values[0], params.values[1]));
+				radial_gradient->set_focal(Vector2(params.values[2], params.values[3]));
+				radial_gradient->set_radius(params.values[4]);
+				radial_gradient->set_color_ramp(color_ramp);
+				return radial_gradient;
+			}
+
+			return Ref<VGPaint>();
+		} else {
+			ToveRGBA rgba;
+			p_paint->getRGBA(rgba, 1.0f);
+			Ref<VGColor> color;
+			color.instance();
+			color->set_color(Color(rgba.r, rgba.g, rgba.b, rgba.a));
+			return color;
+		}
 	} else {
 		return Ref<VGPaint>();
 	}
@@ -233,8 +274,9 @@ void VGPath::update_mesh_representation() {
 	if (!is_empty()) {
 		Ref<VGRenderer> renderer = get_inherited_renderer();
 		if (renderer.is_valid()) {
-
-			renderer->render_mesh(mesh, this);
+			Ref<Material> ignored_material; // ignored
+			Ref<Texture> ignored_texture; // ignored
+			renderer->render_mesh(mesh, ignored_material, ignored_texture, this, false);
 			texture = renderer->render_texture(this);
 		}
 	}
@@ -695,9 +737,16 @@ Node2D *VGPath::create_mesh_node() {
 			MeshInstance2D *mesh_inst = memnew(MeshInstance2D);
 			Ref<ArrayMesh> mesh;
 			mesh.instance();
-			renderer->render_mesh(mesh, this);
+			Ref<Material> material;
+			Ref<Texture> texture;
+			renderer->render_mesh(mesh, material, texture, this, true);
 			mesh_inst->set_mesh(mesh);
-			mesh_inst->set_texture(renderer->render_texture(this));	
+			if (material.is_valid()) {
+				mesh_inst->set_material(material);
+			}
+			if (texture.is_valid()) {
+				mesh_inst->set_texture(texture);
+			}
 
 			mesh_inst->set_transform(get_transform());
 			mesh_inst->set_name(get_name());
@@ -771,11 +820,18 @@ VGPath *VGPath::create_from_svg(Ref<Resource> p_resource) {
 }
 
 Node *createVectorSprite(Ref<Resource> p_resource) {
-	return VGPath::create_from_svg(p_resource);
+	VGPath *path = VGPath::create_from_svg(p_resource);
+	if (path) {
+		return path;
+	} else {
+		return memnew(Sprite); // not a vector file
+	}
 }
 
 void configureVectorSprite(Node *p_child, Ref<Resource> p_resource) {
-	EditorData *editor_data = EditorNode::get_singleton()->get_scene_tree_dock()->get_editor_data();
-	editor_data->get_undo_redo().add_do_method(p_child, "import_svg", p_resource->get_path());
-	editor_data->get_undo_redo().add_do_reference(p_child);
+	if (p_child->is_class_ptr(VGPath::get_class_ptr_static())) {
+		EditorData *editor_data = EditorNode::get_singleton()->get_scene_tree_dock()->get_editor_data();
+		editor_data->get_undo_redo().add_do_method(p_child, "import_svg", p_resource->get_path());
+		editor_data->get_undo_redo().add_do_reference(p_child);
+	}
 }

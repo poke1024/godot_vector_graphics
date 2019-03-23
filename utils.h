@@ -20,6 +20,10 @@ inline Rect2 tove_bounds_to_rect2(const float *bounds) {
 
 tove::PathRef new_transformed_path(const tove::PathRef &p_tove_path, const Transform2D &p_transform);
 
-void copy_mesh(Ref<ArrayMesh> &p_mesh, tove::MeshRef &p_tove_mesh);
+Ref<ShaderMaterial> copy_mesh(
+	Ref<ArrayMesh> &p_mesh,
+	tove::MeshRef &p_tove_mesh,
+	const tove::GraphicsRef &p_graphics,
+	Ref<Texture> &r_texture);
 
 #endif // VG_UTILS_H

@@ -1552,7 +1552,8 @@ void VGEditor::_update_overlay(bool p_always_update) {
 				tove::DefaultCurveFlattener(100, 6)));
 	    tove::MeshRef tove_mesh = tove::tove_make_shared<tove::ColorMesh>(); 
 		tesselator->graphicsToMesh(overlay_graphics.get(), UPDATE_MESH_EVERYTHING, tove_mesh, tove_mesh);
-		copy_mesh(overlay, tove_mesh);
+		Ref<Texture> ignored_texture;
+		copy_mesh(overlay, tove_mesh, overlay_graphics, ignored_texture);
 	}
 	overlay_full_xform = xform;
 }
