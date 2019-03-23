@@ -176,18 +176,19 @@ Ref<ShaderMaterial> copy_mesh(
 
             const int j0 = i * 3 * matrix_rows;
             code += "matrix=mat3(";
-            for (int j = 0; j < 3 * matrix_rows; j++) {
-                if (j % 3 == 0) {
-                    if (j > 0) {
-                        code += "),";
+
+            for (int j = 0; j < 3; j++) {
+                if (j > 0) {
+                    code += "),";
+                }
+                code += "vec3(";
+                for (int k = 0; k < 3; k++) {
+                    if (k > 0) {
+                        code += ",";
                     }
-                    code += "vec3(";
+                    s = String::num(matrix_data_write[j0 + j + k * 3]);
+                    code += s;
                 }
-                if (j % 3 > 0) {
-                    code += ",";
-                }
-                s = String::num(matrix_data_write[j0 + j]);
-                code += s;
             }
             code += "));}\n";
             //code += ");break;\n";
