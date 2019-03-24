@@ -277,7 +277,7 @@ void VGPath::update_mesh_representation() {
 			Ref<Material> ignored_material; // ignored
 			Ref<Texture> ignored_texture; // ignored
 			renderer->render_mesh(mesh, ignored_material, ignored_texture, this, false);
-			texture = renderer->render_texture(this);
+			texture = renderer->render_texture(this, false);
 		}
 	}
 }
@@ -719,7 +719,7 @@ Node2D *VGPath::create_mesh_node() {
 	if (renderer.is_valid()) {
 		if (renderer->prefer_sprite()) {
 			Sprite *sprite = memnew(Sprite);
-			sprite->set_texture(renderer->render_texture(this));
+			sprite->set_texture(renderer->render_texture(this, true));
 
 			//Size2 s = get_global_transform().get_scale();
 			Size2 s = get_transform().get_scale();

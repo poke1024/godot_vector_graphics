@@ -25,7 +25,7 @@ public:
         return Rect2();
     }
 
-    virtual Ref<ImageTexture> render_texture(VGPath *p_path) {
+    virtual Ref<ImageTexture> render_texture(VGPath *p_path, bool p_hq) {
         return Ref<ImageTexture>();
     }
 

@@ -9,7 +9,8 @@ static Ref<Image> tove_graphics_rasterize(
 	const tove::GraphicsRef &p_tove_graphics,
 	int p_width, int p_height,
 	float p_tx, float p_ty,
-	float p_scale) {
+	float p_scale,
+	bool p_hq) {
 
 	ERR_FAIL_COND_V(p_width <= 0, Ref<Image>());
 	ERR_FAIL_COND_V(p_height <= 0, Ref<Image>());
@@ -23,7 +24,7 @@ static Ref<Image> tove_graphics_rasterize(
 	const ToveRasterizeSettings *defaultSettings = tove::nsvg::getDefaultRasterizeSettings();
 	if (defaultSettings) {
 		ToveRasterizeSettings settings = *defaultSettings;
-		settings.quality = 1;
+		settings.quality = p_hq ? 1 : 0;
 		PoolVector<uint8_t>::Write dw = dst_image.write();
 		p_tove_graphics->rasterize(&dw[0], p_width, p_height, w * 4, p_tx, p_ty, p_scale, &settings);
 	}
@@ -123,7 +124,7 @@ Rect2 VGSpriteRenderer::render_mesh(Ref<ArrayMesh> &p_mesh, Ref<Material> &r_mat
     return tove_bounds_to_rect2(p_path->get_tove_path()->getExactBounds());
 }
 
-Ref<ImageTexture> VGSpriteRenderer::render_texture(VGPath *p_path) {
+Ref<ImageTexture> VGSpriteRenderer::render_texture(VGPath *p_path, bool p_hq) {
 
     // VGPath *root = p_path->get_root_path();
 
@@ -151,6 +152,6 @@ Ref<ImageTexture> VGSpriteRenderer::render_texture(VGPath *p_path) {
 			graphics,
 			Math::ceil(w * resolution), Math::ceil(h * resolution),
 			-bounds[0] * resolution, -bounds[1] * resolution,
-			resolution), ImageTexture::FLAG_FILTER);
+			resolution, p_hq), ImageTexture::FLAG_FILTER);
 	return texture;
 }

@@ -95,11 +95,11 @@ Ref<ShaderMaterial> copy_mesh(
             matrix_data_write[i] = 0.0f;
         }
 
-        PoolVector<ToveVec4> arguments_data;
+        PoolVector<float> arguments_data;
         ERR_FAIL_COND_V(arguments_data.resize(alloc.numPaints) != OK, Ref<ShaderMaterial>());
-        PoolVector<ToveVec4>::Write arguments_data_write = arguments_data.write();
+        PoolVector<float>::Write arguments_data_write = arguments_data.write();
         for (int i = 0; i < alloc.numPaints; i++) {
-            arguments_data_write[i] = ToveVec4{0, 0, 0, 0};
+            arguments_data_write[i] = 0.0f;
         }
 
         PoolVector<uint8_t> pixels;
@@ -115,7 +115,7 @@ Ref<ShaderMaterial> copy_mesh(
         gradientData.arguments = arguments_data_write.ptr();
         gradientData.colorsTexture = pixels_write.ptr();
         gradientData.colorsTextureRowBytes = npaints * 4;
-        gradientData.colorTextureHeight = alloc.numColors;
+        gradientData.colorsTextureHeight = alloc.numColors;
 
         feed->bind(gradientData);
         feed->beginUpdate();
@@ -163,19 +163,13 @@ Ref<ShaderMaterial> copy_mesh(
             code += s;
             code += "){";
 
-            const ToveVec4 &v = arguments_data_write[i];
-            code += "vertex_arg=vec4(";
-            s = String::num(v.x);
-            code += s; code += ",";
-            s = String::num(v.y);
-            code += s; code += ",";
-            s = String::num(v.z);
-            code += s; code += ",";
-            s = String::num(v.w);
-            code += s; code += ");";
+            const float &v = arguments_data_write[i];
+            code += "a=";
+            s = String::num_real(v);
+            code += s; code += ";";
 
             const int j0 = i * 3 * matrix_rows;
-            code += "matrix=mat3(";
+            code += "m=mat3(";
 
             for (int j = 0; j < 3; j++) {
                 if (j > 0) {
@@ -195,25 +189,25 @@ Ref<ShaderMaterial> copy_mesh(
         }
         //code += "}\n";
 
-        const String shader_code = String(R"GLSL(
+        String shader_code = String(R"GLSL(
 shader_type canvas_item;
 
 varying smooth mediump vec2 gradient_pos;
-varying smooth mediump vec3 gradient_scale;
-varying smooth mediump vec2 texture_pos;
+varying flat mediump vec3 gradient_scale;
+varying flat mediump float paint;
 
 void vertex()
 {
     int i = int(floor(UV.x * NPAINTS));
-    vec4 vertex_arg;
-    mat3 matrix;
+    float a;
+    mat3 m;
 
 )GLSL") +  code.as_string() + String(R"GLSL(
 
-	gradient_pos = (matrix * vec3(VERTEX.xy, 1)).xy;
-	gradient_scale = vertex_arg.zwx;
+	gradient_pos = (m * vec3(VERTEX.xy, 1)).xy;
+	gradient_scale = vec3(CSTEP, 1.0f - 2.0f * CSTEP, a);
 
-	texture_pos = UV.xy;
+	paint = UV.x;
 }
 
 void fragment()
@@ -221,14 +215,18 @@ void fragment()
 	float y = mix(gradient_pos.y, length(gradient_pos), gradient_scale.z);
 	y = gradient_scale.x + gradient_scale.y * y;
 
-	vec2 texture_pos_exact = vec2(texture_pos.x, y);
+	vec2 texture_pos_exact = vec2(paint, y);
 	COLOR = texture(TEXTURE, texture_pos_exact); 
 }
 
 )GLSL");
 
-        String npaints_str = String::num_real((float)npaints);
-        shader->set_code(shader_code.replace("NPAINTS", npaints_str.c_str()));
+        String npaints_str = String::num_real(npaints);
+        String cstep_str = String::num_real(0.5f / alloc.numColors);
+
+        shader_code = shader_code.replace("NPAINTS", npaints_str.c_str());
+        shader_code = shader_code.replace("CSTEP", cstep_str.c_str());
+        shader->set_code(shader_code);
 
         material.instance();
         material->set_shader(shader);

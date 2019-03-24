@@ -73,7 +73,7 @@ Rect2 VGAbstractMeshRenderer::render_mesh(Ref<ArrayMesh> &p_mesh, Ref<Material> 
 		
     tove::MeshRef tove_mesh;
     
-    if (p_hq) {
+    if (p_hq && !subtree_graphics->areColorsSolid()) {
         tove_mesh = tove::tove_make_shared<tove::PaintMesh>();
     } else {
         tove_mesh = tove::tove_make_shared<tove::ColorMesh>();
@@ -87,6 +87,6 @@ Rect2 VGAbstractMeshRenderer::render_mesh(Ref<ArrayMesh> &p_mesh, Ref<Material> 
     return tove_bounds_to_rect2(p_path->get_tove_path()->getBounds());
 }
 
-Ref<ImageTexture> VGAbstractMeshRenderer::render_texture(VGPath *p_path) {
+Ref<ImageTexture> VGAbstractMeshRenderer::render_texture(VGPath *p_path, bool p_hq) {
     return Ref<ImageTexture>();
 }
