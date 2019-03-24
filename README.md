@@ -5,6 +5,10 @@ Vector Graphics for Godot.
 * All vector graphics can be converted into `MeshInstance2D`s
 * I have very little time to work on this
 
+Live Demo:
+
+https://www.youtube.com/watch?v=EsTSf5dytbs&feature=youtu.be
+
 # Install and build
 
 * Check out this repo as `git clone --recurse-submodules https://github.com/poke1024/godot_vector_graphics`
